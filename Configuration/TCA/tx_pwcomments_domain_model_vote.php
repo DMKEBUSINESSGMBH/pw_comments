@@ -7,7 +7,7 @@
  *  |     2015 Dennis Roemmich <dennis@roemmich.eu>
  */
 
-if (!defined('TYPO3_MODE')) {
+if (!defined('TYPO3')) {
     die('Access denied.');
 }
 
@@ -27,6 +27,7 @@ return [
             '0' => 'ext-pwcomments-type-vote_down',
             '1' => 'ext-pwcomments-type-vote_up'
         ],
+        'security' => ['ignorePageTypeRestriction' => 1],
     ],
     'types' => [
         '1' => ['showitem' => 'type,crdate,author,author_ident']

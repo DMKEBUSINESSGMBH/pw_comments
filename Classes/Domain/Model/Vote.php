@@ -9,8 +9,6 @@ namespace T3\PwComments\Domain\Model;
  *  |     2016-2017 Christian Wolfram <c.wolfram@chriwo.de>
  */
 
-use TYPO3\CMS\Extbase\Domain\Model\FrontendUser;
-
 /**
  * Vote model (for comments)
  *

@@ -15,10 +15,10 @@ use T3\PwComments\Utility\HashEncryptionUtility;
 use TYPO3\CMS\Core\DataHandling\DataHandler;
 use TYPO3\CMS\Core\Messaging\FlashMessage;
 use TYPO3\CMS\Core\Messaging\FlashMessageService;
+use TYPO3\CMS\Core\Type\ContextualFeedbackSeverity;
 use TYPO3\CMS\Core\TypoScript\TemplateService;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\RootlineUtility;
-use TYPO3\CMS\Extbase\Object\ObjectManager;
 use TYPO3\CMS\Extbase\Utility\LocalizationUtility;
 use TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer;
 
@@ -52,9 +52,8 @@ class ProcessDatamap
             isset($fieldArray['hidden']) &&
             (int)$fieldArray['hidden'] === 0
         ) {
-            $objectManager = GeneralUtility::makeInstance(ObjectManager::class);
             /** @var CommentRepository $repo */
-            $repo = $objectManager->get(CommentRepository::class);
+            $repo = GeneralUtility::makeInstance(CommentRepository::class);
             $comment = $repo->findByCommentUid($id);
 
             // Get typoscript settings
@@ -96,7 +95,7 @@ class ProcessDatamap
                     'mailSentToAuthorAfterPublish',
                     'PwComments',
                     [$comment->getCommentAuthorMailAddress()]
-                ), '', FlashMessage::OK, true));
+                ), '', ContextualFeedbackSeverity::OK, true));
             } else {
                 throw new \RuntimeException('Error while calling the following url: ' . $url);
             }

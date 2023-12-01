@@ -7,7 +7,7 @@
  *  |     2015 Dennis Roemmich <dennis@roemmich.eu>
  */
 
-if (!defined('TYPO3_MODE')) {
+if (!defined('TYPO3')) {
     die('Access denied.');
 }
 
@@ -29,7 +29,8 @@ return [
         'enablecolumns' => [
             'disabled' => 'hidden'
         ],
-        'iconfile' => 'EXT:pw_comments/Resources/Public/Icons/tx_pwcomments_domain_model_comment.png'
+        'iconfile' => 'EXT:pw_comments/Resources/Public/Icons/tx_pwcomments_domain_model_comment.png',
+        'security' => ['ignorePageTypeRestriction' => 1],
     ],
     'types' => [
         '1' => ['showitem' => 'hidden,author,author_name,author_mail,author_website,author_ident,terms_accepted,' .
@@ -43,15 +44,8 @@ return [
             'exclude' => 0,
             'label' => $ll . 'general.language',
             'config' => [
-                'type' => 'select',
-                'renderType' => 'selectSingle',
-                'foreign_table' => 'sys_language',
-                'foreign_table_where' => 'ORDER BY sys_language.title',
-                'items' => [
-                    ['LLL:EXT:lang/locallang_general.php:LGL.allLanguages', -1],
-                    ['LLL:EXT:lang/locallang_general.php:LGL.default_value', 0]
-                ]
-            ]
+                'type' => 'language',
+            ],
         ],
         'l18n_parent' => [
             'displayCond' => 'FIELD:sys_language_uid:>:0',

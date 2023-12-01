@@ -75,7 +75,8 @@ class MailNotificationController
                 'sendAuthorMailWhenCommentHasBeenApproved',
                 'Pi2',
                 ['_commentUid' => $uid, '_skipMakingSettingsRenderable' => true],
-                $pid
+                $pid,
+                $request
             );
             $statusCode = 200; // OK
         } else {
@@ -106,7 +107,8 @@ class MailNotificationController
         $pluginName = 'Pi1',
         $settings = [],
         $pid = 0,
-        $vendorName = 'T3'
+        $vendorName = 'T3',
+        ServerRequestInterface $request
     ) {
         /** @var TypoScriptService $typoScriptService */
         $typoScriptService = GeneralUtility::makeInstance(TypoScriptService::class);
@@ -159,7 +161,7 @@ class MailNotificationController
             '_LOCAL_LANG' => $pluginSetupLocalLang
         ];
 
-        return $bootstrap->run('', $configuration);
+        return $bootstrap->run('', $configuration, $request);
     }
 
     /**

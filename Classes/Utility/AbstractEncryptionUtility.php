@@ -11,7 +11,6 @@ namespace T3\PwComments\Utility;
 
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Configuration\ConfigurationManagerInterface;
-use TYPO3\CMS\Extbase\Object\ObjectManager;
 
 /**
  * Class AbstractUtility
@@ -42,16 +41,6 @@ abstract class AbstractEncryptionUtility
      */
     public static function getConfigurationManagerInterface()
     {
-        return self::getObjectManager()->get(ConfigurationManagerInterface::class);
-    }
-
-    /**
-     * Returns the object manager
-     *
-     * @return ObjectManager
-     */
-    public static function getObjectManager()
-    {
-        return GeneralUtility::makeInstance(ObjectManager::class);
+        return GeneralUtility::makeInstance(ConfigurationManagerInterface::class);
     }
 }

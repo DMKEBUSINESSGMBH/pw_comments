@@ -8,6 +8,8 @@ namespace T3\PwComments\Utility;
  *  |     2015 Dennis Roemmich <dennis@roemmich.eu>
  *  |     2016-2017 Christian Wolfram <c.wolfram@chriwo.de>
  */
+
+use TYPO3\CMS\Core\Http\ApplicationType;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
@@ -65,13 +67,11 @@ class Cookie
      */
     protected function getCookieDomain()
     {
-        if (!defined('TYPO3_MODE')) {
-            define(TYPO3_MODE, 'FE');
-        }
         $result = '';
         $cookieDomain = $GLOBALS['TYPO3_CONF_VARS']['SYS']['cookieDomain'] ?? null;
-        if (!empty($GLOBALS['TYPO3_CONF_VARS'][TYPO3_MODE]['cookieDomain'])) {
-            $cookieDomain = $GLOBALS['TYPO3_CONF_VARS'][TYPO3_MODE]['cookieDomain'];
+        $environment = ApplicationType::fromRequest($GLOBALS['TYPO3_REQUEST'] ?? null)->isFrontend() ? 'FE' : 'BE';
+        if (!empty($GLOBALS['TYPO3_CONF_VARS'][$environment]['cookieDomain'])) {
+            $cookieDomain = $GLOBALS['TYPO3_CONF_VARS'][$environment]['cookieDomain'];
         }
         if ($cookieDomain) {
             if ($cookieDomain[0] === '/') {

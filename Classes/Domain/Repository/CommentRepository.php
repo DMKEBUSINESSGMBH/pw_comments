@@ -8,7 +8,8 @@ namespace T3\PwComments\Domain\Repository;
  *  |     2015 Dennis Roemmich <dennis@roemmich.eu>
  *  |     2016-2017 Christian Wolfram <c.wolfram@chriwo.de>
  */
-use TYPO3\CMS\Extbase\Object\ObjectManagerInterface;
+
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Persistence\Generic\Typo3QuerySettings;
 use TYPO3\CMS\Extbase\Persistence\Generic\QueryResult;
 use T3\PwComments\Domain\Model\Comment;
@@ -34,15 +35,13 @@ class CommentRepository extends Repository
 
     /**
      * Initializes the repository.
-     *
-     * @param ObjectManagerInterface $objectManager
      */
-    public function __construct(ObjectManagerInterface $objectManager)
+    public function __construct()
     {
-        parent::__construct($objectManager);
+        parent::__construct();
 
         /** @var Typo3QuerySettings $querySettings */
-        $querySettings = $this->objectManager->get(Typo3QuerySettings::class);
+        $querySettings = GeneralUtility::makeInstance(Typo3QuerySettings::class);
         $querySettings->setRespectStoragePage(false);
         $this->setDefaultQuerySettings($querySettings);
     }

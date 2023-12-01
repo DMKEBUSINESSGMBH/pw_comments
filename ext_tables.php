@@ -8,7 +8,7 @@
  *  |     2016-2017 Christian Wolfram <c.wolfram@chriwo.de>
  */
 
-if (!defined('TYPO3_MODE')) {
+if (!defined('TYPO3')) {
     die('Access denied.');
 }
 
@@ -43,8 +43,6 @@ $boot = function ($extensionKey) {
     );
 
     // TCA options
-    \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::allowTableOnStandardPages('tx_pwcomments_domain_model_comment');
-    \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::allowTableOnStandardPages('tx_pwcomments_domain_model_vote');
     \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::addToInsertRecords('tx_pwcomments_domain_model_comment');
 };
 

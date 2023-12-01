@@ -8,24 +8,26 @@ namespace T3\PwComments\Controller;
  *  |     2015 Dennis Roemmich <dennis@roemmich.eu>
  *  |     2016-2017 Christian Wolfram <c.wolfram@chriwo.de>
  */
+
+use Psr\Http\Message\ResponseInterface;
 use T3\PwComments\Domain\Model\Comment;
+use T3\PwComments\Domain\Model\FrontendUser;
 use T3\PwComments\Domain\Model\Vote;
 use T3\PwComments\Domain\Repository\CommentRepository;
+use T3\PwComments\Domain\Repository\FrontendUserRepository;
 use T3\PwComments\Domain\Repository\VoteRepository;
 use T3\PwComments\Utility\Cookie;
 use T3\PwComments\Utility\HashEncryptionUtility;
 use T3\PwComments\Utility\Mail;
 use T3\PwComments\Utility\Settings;
 use T3\PwComments\Utility\StringUtility;
-use TYPO3\CMS\Core\Messaging\FlashMessage;
+use TYPO3\CMS\Core\Type\ContextualFeedbackSeverity;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Extbase\Domain\Model\FrontendUser;
-use TYPO3\CMS\Extbase\Domain\Repository\FrontendUserRepository;
+use TYPO3\CMS\Extbase\Http\ForwardResponse;
 use TYPO3\CMS\Extbase\Persistence\Generic\PersistenceManager;
 use TYPO3\CMS\Extbase\Persistence\Generic\QueryResult;
 use TYPO3\CMS\Extbase\Utility\LocalizationUtility;
 use TYPO3\CMS\Fluid\View\StandaloneView;
-use TYPO3\CMS\Extbase\Object\ObjectManager;
 
 /**
  * The comment controller
@@ -171,7 +173,7 @@ class CommentController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionControll
      *
      * @TYPO3\CMS\Extbase\Annotation\IgnoreValidation("commentToReplyTo")
      */
-    public function indexAction(Comment $commentToReplyTo = null)
+    public function indexAction(Comment $commentToReplyTo = null): ResponseInterface
     {
         if (isset($this->settings['invertCommentSorting']) && $this->settings['invertCommentSorting']) {
             $this->commentRepository->setInvertCommentSorting(true);
@@ -214,6 +216,8 @@ class CommentController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionControll
         $this->view->assign('comments', $comments);
         $this->view->assign('commentCount', $this->calculateCommentCount($comments));
         $this->view->assign('commentToReplyTo', $commentToReplyTo);
+
+        return $this->htmlResponse();
     }
 
     /**
@@ -223,7 +227,7 @@ class CommentController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionControll
      * @return bool
      * @TYPO3\CMS\Extbase\Annotation\Validate("T3\PwComments\Domain\Validator\CommentValidator", param="newComment")
      */
-    public function createAction(Comment $newComment = null)
+    public function createAction(Comment $newComment = null): ResponseInterface
     {
         // Hidden field Spam-Protection
         if (isset($this->settings['hiddenFieldSpamProtection']) && $this->settings['hiddenFieldSpamProtection']
@@ -305,8 +309,7 @@ class CommentController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionControll
             $anchor = '#' . $this->settings['commentAnchorPrefix'] . $newComment->getUid();
         }
 
-        $this->redirectToUri($this->buildUriByUid($this->pageUid, true) . $anchor);
-        return false;
+        return $this->redirectToUri($this->buildUriByUid($this->pageUid, true) . $anchor);
     }
 
     /**
@@ -319,7 +322,7 @@ class CommentController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionControll
      * @TYPO3\CMS\Extbase\Annotation\IgnoreValidation("newComment")
      * @TYPO3\CMS\Extbase\Annotation\IgnoreValidation("commentToReplyTo")
      */
-    public function newAction(Comment $newComment = null, Comment $commentToReplyTo = null)
+    public function newAction(Comment $newComment = null, Comment $commentToReplyTo = null): ResponseInterface
     {
         if ($newComment !== null) {
             $this->view->assign('newComment', $newComment);
@@ -342,6 +345,8 @@ class CommentController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionControll
 
         $this->view->assign('unregistredUserName', $unregistredUserName);
         $this->view->assign('unregistredUserMail', $unregistredUserMail);
+
+        return $this->htmlResponse();
     }
 
     /**
@@ -352,10 +357,9 @@ class CommentController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionControll
      *
      * @TYPO3\CMS\Extbase\Annotation\IgnoreValidation("comment")
      */
-    public function upvoteAction(Comment $comment)
+    public function upvoteAction(Comment $comment): ResponseInterface
     {
-        $this->performVoting($comment, Vote::TYPE_UPVOTE);
-        return '';
+        return $this->performVoting($comment, Vote::TYPE_UPVOTE);
     }
 
     /**
@@ -366,10 +370,9 @@ class CommentController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionControll
      *
      * @TYPO3\CMS\Extbase\Annotation\IgnoreValidation("comment")
      */
-    public function downvoteAction(Comment $comment)
+    public function downvoteAction(Comment $comment): ResponseInterface
     {
-        $this->performVoting($comment, Vote::TYPE_DOWNVOTE);
-        return '';
+        return $this->performVoting($comment, Vote::TYPE_DOWNVOTE);
     }
 
     /**
@@ -379,17 +382,16 @@ class CommentController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionControll
      * @param string $hash hash to confirm
      * @return void
      */
-    public function confirmCommentAction($comment, $hash)
+    public function confirmCommentAction($comment, $hash): ResponseInterface
     {
         $comment = $this->commentRepository->findByCommentUid($comment);
         if (!$comment || !HashEncryptionUtility::validCommentHash($hash, $comment) || !$comment->getHidden()) {
             $this->addFlashMessage(
                 LocalizationUtility::translate('noCommentAvailable', 'PwComments'),
                 '',
-                FlashMessage::ERROR
+                ContextualFeedbackSeverity::ERROR
             );
-            $this->redirectToUri($this->buildUriByUid($this->pageUid, true));
-            return;
+            return $this->redirectToUri($this->buildUriByUid($this->pageUid, true));
         }
 
         $comment->setHidden(false);
@@ -416,7 +418,7 @@ class CommentController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionControll
         }
 
         $this->addFlashMessage(LocalizationUtility::translate('commentPublished', 'PwComments'));
-        $this->redirectToUri($this->buildUriByUid($this->pageUid, true));
+        return $this->redirectToUri($this->buildUriByUid($this->pageUid, true));
     }
 
     /**
@@ -426,12 +428,11 @@ class CommentController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionControll
      * @param int $type Check out Tx_PwComments_Domain_Model_Vote constants
      * @return void
      */
-    protected function performVoting(Comment $comment, $type)
+    protected function performVoting(Comment $comment, $type): ResponseInterface
     {
         $commentAnchor = '#' . $this->settings['commentAnchorPrefix'] . $comment->getUid();
         if (!$this->settings['enableVoting']) {
-            $this->forward('index');
-            return;
+            return new ForwardResponse('index');
         }
 
         $this->createAuthorIdent();
@@ -442,10 +443,9 @@ class CommentController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionControll
                 $this->currentAuthorIdent === $comment->getAuthorIdent()
             ) {
                 // TODO: use flash messages here?
-                $this->redirectToUri(
+                return $this->redirectToUri(
                     $this->buildUriByUid($this->pageUid, true, ['doNotVoteForYourself' => 1]) . $commentAnchor
                 );
-                return;
             }
             $vote = $this->voteRepository->findOneByCommentAndAuthorIdent($comment, $this->currentAuthorIdent);
         }
@@ -465,8 +465,7 @@ class CommentController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionControll
 
         $this->getPersistenceManager()->persistAll();
 
-        $this->forward('index');
-        return;
+        return new ForwardResponse('index');
     }
 
 
@@ -512,7 +511,7 @@ class CommentController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionControll
      *
      * @return void
      */
-    public function sendAuthorMailWhenCommentHasBeenApprovedAction()
+    public function sendAuthorMailWhenCommentHasBeenApprovedAction(): ResponseInterface
     {
         /** @var Comment $comment */
         $comment = $this->commentRepository->findByCommentUid($this->settings['_commentUid']);
@@ -536,7 +535,7 @@ class CommentController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionControll
             );
         }
 
-        return '';
+        return $this->htmlResponse();
     }
 
     /**
@@ -634,12 +633,19 @@ class CommentController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionControll
      */
     protected function handleCustomMessages()
     {
-        if (isset($this->settings['ignoreVotingForOwnComments']) && $this->settings['ignoreVotingForOwnComments'] && GeneralUtility::_GP('doNotVoteForYourself') == 1) {
+        if (
+            isset($this->settings['ignoreVotingForOwnComments'])
+            && $this->settings['ignoreVotingForOwnComments']
+            && ($this->request->getParsedBody()['doNotVoteForYourself'] ?? $this->request->getQueryParams()['doNotVoteForYourself'] ?? 0) == 1
+        ) {
             $this->addFlashMessage(
                 LocalizationUtility::translate('tx_pwcomments.custom.doNotVoteForYourself', 'PwComments')
             );
             $this->view->assign('hasCustomMessages', true);
-        } elseif ((!isset($this->settings['enableVoting']) || !$this->settings['enableVoting']) && GeneralUtility::_GP('votingDisabled') == 1) {
+        } elseif (
+            (!isset($this->settings['enableVoting']) || !$this->settings['enableVoting'])
+            && ($this->request->getParsedBody()['votingDisabled'] ?? $this->request->getQueryParams()['votingDisabled'] ?? 0) == 1
+        ) {
             $this->addFlashMessage(
                 LocalizationUtility::translate('tx_pwcomments.custom.votingDisabled', 'PwComments')
             );
@@ -664,7 +670,6 @@ class CommentController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionControll
      */
     protected function getPersistenceManager()
     {
-        $objectManager = GeneralUtility::makeInstance(ObjectManager::class);
-        return $objectManager->get(PersistenceManager::class);
+        return GeneralUtility::makeInstance(PersistenceManager::class);
     }
 }
